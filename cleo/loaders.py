@@ -76,7 +76,7 @@ def load_weibull_parameters(self, height):
     """
     Load weibull parameters for a specific height
     :param self: an  instance of the Atlas class
-    :param height: Height for which to load Weibull parameters. Possible values are [50, 100, 150].
+    :param height: Height for which to load Weibull parameters. Possible values are [10, 50, 100, 150, 200].
     GWA also provides 10 and 200 m data, which, however, is not loaded by Atlas class currently.
     :type height: int
     :return: Tuple containing Weibull parameter rasters (a, k)
@@ -129,7 +129,7 @@ def load_gwa(self):
     url = "https://globalwindatlas.info/api/gis/country"
     layers = ['air-density', 'combined-Weibull-A', 'combined-Weibull-k']
     ground = ['elevation_w_bathymetry']
-    height = ['50', '100', '150', '200']
+    height = ['10', '50', '100', '150', '200']
 
     c = self.parent.country
     path_raw = self.parent.path / "data" / "raw" / self.parent.country

@@ -155,6 +155,27 @@ def compute_mean_wind_speed(self, height, chunk_size=None, inplace=True):
         return mean_wind_speed_data
 
 
+def compute_wind_shear_exponent(self, chunk_size=None):
+    """
+    Compute wind shear exponent
+
+    :param self: An instance of the Atlas-class
+    :param chunk_size: Size of chunks in pixels. If None, computation is not chunked.
+    :type chunk_size: int
+    """
+    if "mean_wind_speed" not in self.data.data_vars or 10 not in self.data["mean_wind_speed"].coords["height"]:
+        self.compute_mean_wind_speed(10, chunk_size)
+    if 50 not in self.data["mean_wind_speed"].coords["height"]:
+        self.compute_mean_wind_speed(50, chunk_size)
+
+    u_mean_10 = self.data.mean_wind_speed.sel(height=10)
+    u_mean_50 = self.data.mean_wind_speed.sel(height=50)
+
+    alpha = (np.log(u_mean_50) - np.log(u_mean_10)) / (np.log(50) - np.log(10))
+    self.data['wind_shear_exponent'] = alpha.squeeze().rename("wind_shear_exponent")
+    logging.info(f'Wind shear exponent for {self.parent.country} computed.')
+
+
 def compute_terrain_roughness_length(self, chunk_size=None):
     """
     Compute terrain roughness length
@@ -163,16 +184,16 @@ def compute_terrain_roughness_length(self, chunk_size=None):
     :param chunk_size: Size of chunks in pixels. If None, computation is not chunked.
     :type chunk_size: int
     """
-    if "mean_wind_speed" not in self.data.data_vars or 50 not in self.data["mean_wind_speed"].coords["height"]:
+    if "mean_wind_speed" not in self.data.data_vars or 10 not in self.data["mean_wind_speed"].coords["height"]:
+        self.compute_mean_wind_speed(10, chunk_size)
+    if 50 not in self.data["mean_wind_speed"].coords["height"]:
         self.compute_mean_wind_speed(50, chunk_size)
-    if 100 not in self.data["mean_wind_speed"].coords["height"]:
-        self.compute_mean_wind_speed(100, chunk_size)
 
+    u_mean_10 = self.data.mean_wind_speed.sel(height=10)
     u_mean_50 = self.data.mean_wind_speed.sel(height=50)
-    u_mean_100 = self.data.mean_wind_speed.sel(height=100)
 
-    alpha = (np.log(u_mean_100) - np.log(u_mean_50)) / (np.log(100) - np.log(50))
-    self.data['terrain_roughness_length'] = alpha.squeeze().rename("terrain_roughness_length")
+    z = np.exp((u_mean_50 * np.log(10) - u_mean_10 * np.log(50)) / (u_mean_50 - u_mean_10))
+    self.data['terrain_roughness_length'] = z.squeeze().rename("terrain_roughness_length")
     logging.info(f'Terrain roughness length for {self.parent.country} computed.')
 
 
